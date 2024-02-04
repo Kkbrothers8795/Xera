@@ -2,7 +2,8 @@ ARG BASE_IMAGE=php:8.1.27-apache
 FROM ${BASE_IMAGE}
 LABEL maintainer="dev@chialab.io"
 
-COPY . .
+WORKDIR /app
+COPY . /app
 
 # Fix Debian 9 (Stretch) source list, because it has been moved to archive
 RUN if [ "$(grep '^VERSION_ID=' /etc/os-release | cut -d '=' -f 2 | tr -d '"')" -eq "9" ]; then \
@@ -79,4 +80,4 @@ RUN cd /opt \
   # Remove installer files.
   && rm /opt/composer-setup.php /opt/composer-setup.sha384sum
 
-CMD [ "php", "-S", "0.0.0.0:80", "./index.php" ]
+CMD [ "php", "-S", "0.0.0.0", "./index.php" ]
