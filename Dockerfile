@@ -79,4 +79,3 @@ RUN cd /opt \
   # Remove installer files.
   && rm /opt/composer-setup.php /opt/composer-setup.sha384sum
 
-CMD ["php" "-S" "0.0.0.0:8080"
