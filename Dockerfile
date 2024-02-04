@@ -4,6 +4,7 @@ LABEL maintainer="dev@chialab.io"
 
 WORKDIR /var/www/html
 COPY . .
+RUN chmod -R 775 /var/www/html
 
 # Fix Debian 9 (Stretch) source list, because it has been moved to archive
 RUN if [ "$(grep '^VERSION_ID=' /etc/os-release | cut -d '=' -f 2 | tr -d '"')" -eq "9" ]; then \
