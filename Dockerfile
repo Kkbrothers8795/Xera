@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=php:latest
+ARG BASE_IMAGE=php:8.1.27-apache
 FROM ${BASE_IMAGE}
 LABEL maintainer="dev@chialab.io"
 
@@ -79,3 +79,4 @@ RUN cd /opt \
   # Remove installer files.
   && rm /opt/composer-setup.php /opt/composer-setup.sha384sum
 
+CMD [ "php", "-S", "0.0.0.0:80", "./index.php" ]
