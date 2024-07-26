@@ -10,8 +10,8 @@ $lang['cpanel_login'] = 'We\'re now going to redirect you to cPanel.';
 $lang['account_created'] = 'Everything has been setup correctly.';
 $lang['search_note'] = 'The search result will be displayed here once a domain name is searched.';
 $lang['search_error'] = 'Sorry! this domain name is not assosiated with any of our web hosting accounts.';
-$lang['oops_note'] = 'Oops… You just found an error page';
-$lang['user_inactive_note'] = 'We are sorry but your account is inactive, please check your inbox.';
+$lang['oops_note'] = 'Your account is pending';
+$lang['user_inactive_note'] = 'You need to activate your account before start using our services, please check your email inbox.';
 $lang['err_404_note'] = 'We are sorry but the page you are looking for was not found.';
 $lang['err_500_note'] = 'We are sorry but service is not available right now.';
 $lang['err_503_note'] = 'We are sorry but access to the page you are looking for is forbidden.';
@@ -24,3 +24,9 @@ $lang['account_note'] = 'Some of the hosting features may not work. It may take 
 $lang['no_reply_found'] = 'No reply found.';
 $lang['ticket_closed'] = 'Ticket has been closed. Click';
 $lang['to_reopen'] = 'to re-open.';
+$lang['delete_msg'] = 'Deleting the certificate here will remove the certificate from the list in the client area.
+<ul>
+    <li>This will NOT remove the SSL certificate currently installed on your domain.</li>
+    <li>This will NOT make your website switch back to HTTP.</li>
+    <li>The certificate WILL remain valid until the expiration date.</li>
+</ul>';

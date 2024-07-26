@@ -9,8 +9,8 @@ $lang['cpanel_login'] = 'Vi skal nå omdirigere deg til cPanel.';
 $lang['account_created'] = 'Alt er satt opp riktig.';
 $lang['search_note'] = 'Søkeresultatet vil vises her når et domenenavn er søkt.';
 $lang['search_error'] = 'Unnskyld! dette domenenavnet er ikke knyttet til noen av våre webhotellkontoer.';
-$lang['oops_note'] = 'Oops... Du fant nettopp en feilside';
-$lang['user_inactive_note'] = 'Vi beklager, men kontoen din er inaktiv, vennligst sjekk innboksen din.';
+$lang['oops_note'] = 'Kontoen din er avventende';
+$lang['user_inactive_note'] = 'Du må aktivere kontoen din før du kan begynne å bruke våre tjenester, vennligst sjekk e-postinnboksen din.';
 $lang['err_404_note'] = 'Vi beklager, men siden du leter etter ble ikke funnet.';
 $lang['err_500_note'] = 'Vi beklager, men tjenesten er ikke tilgjengelig akkurat nå.';
 $lang['err_503_note'] = 'Vi beklager, men siden du leter etter er forbudt.';
@@ -23,3 +23,9 @@ $lang['account_note'] = 'Noen av vertsfunksjonene fungerer kanskje ikke. Det kan
 $lang['no_reply_found'] = 'Finner ikke noe svar.';
 $lang['ticket_closed'] = 'Billetten var stengt. Klikk';
 $lang['to_reopen'] = 'å åpne igjen.';
+$lang['delete_msg'] = 'Ved å slette sertifikatet her vil det bli fjernet fra listen i kundeområdet.
+<ul>
+    <li>Dette vil IKKE fjerne SSL-sertifikatet som for øyeblikket er installert på ditt domene.</li>
+    <li>Dette vil IKKE få nettstedet ditt til å gå tilbake til HTTP.</li>
+    <li>Sertifikatet vil FORBLI gyldig til utløpsdatoen.</li>
+</ul>';

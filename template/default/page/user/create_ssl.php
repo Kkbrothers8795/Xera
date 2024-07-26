@@ -6,12 +6,62 @@
 	</div>
 	<div class="card p-2 mb-3">
 		<div class="card-body">
-		<p> You can generate CSR and Private key from <a href="https://www.gogetssl.com/online-csr-generator/">Online CSR Generator</a>
 			<?= form_open('ssl/create') ?>
 				<div class="row">
+					<?php
+					if ($acme_active) :
+					?>
+					<div class="col-sm-6">
+						<label class="form-label">SSL Type</label>
+						<select class="form-control mb-2" name="type">
+							<?php
+							$cloudflare = $this->acme->get_cloudflare();
+							if ($this->acme->get_letsencrypt() == 'not-set' && $cloudflare == 'not-set') {
+							} elseif ($cloudflare['email'] != '' && $cloudflare['api_key'] != '') {
+							?>
+							<option value="letsencrypt" selected="true">Let's Encrypt</option>
+							<?php
+							}
+							?>
+							<?php
+							if ($this->ssl->is_active()) :
+							?>
+							<option value="gogetssl">GoGetSSL</option>
+							<?php
+							endif;
+							?>
+							<?php
+							$zerossl = $this->acme->get_zerossl();
+							if ($zerossl == 'not-set' && $cloudflare != 'not-set') {
+
+							} elseif ($zerossl['url'] != '' && $zerossl['eab_kid'] != '' && $zerossl['eab_hmac_key'] != '' && $cloudflare['email'] != '' && $cloudflare['api_key'] != '') {
+							?>
+							<option value="zerossl">ZeroSSL</option>
+							<?php
+							}
+							?>
+							<?php
+							$googletrust = $this->acme->get_googletrust();
+							if ($googletrust == 'not-set' && $cloudflare != 'not-set') {
+
+							} elseif ($googletrust['url'] != '' && $googletrust['eab_kid'] != '' && $googletrust['eab_hmac_key'] != '' && $cloudflare['email'] != '' && $cloudflare['api_key'] != '') {
+							?>
+							<option value="googletrust">Google Trust Services</option>
+							<?php
+							}
+							?>
+						</select>
+					</div>
+					<div class="col-sm-6 mb-2">
+					<?php
+					else :
+					?>
 					<div class="col-sm-12 mb-2">
-						<label class="form-label"><?= $this->base->text('csr_code', 'label') ?></label>
-						<textarea class="form-control" name="csr" placeholder="<?= $this->base->text('csr_code', 'label') ?>" style="min-height: 250px;"></textarea>
+					<?php
+					endif;
+					?>
+						<label class="form-label"><?= $this->base->text('domain_name', 'label') ?></label>
+						<input type="text" class="form-control" name="domain" placeholder="<?= $this->base->text('domain_name', 'label') ?>"/>
 					</div>
 					<?php if($this->grc->is_active()):?>
 						<div class="mb-2">
@@ -28,11 +78,28 @@
 							<?php elseif($this->grc->get_type() == "human"): ?>
 								<div id='captcha' class='h-captcha' data-sitekey="<?= $this->grc->get_site_key();?>"></div>
 								<script src='https://hcaptcha.com/1/api.js' async defer ></script>
+							<?php elseif ($this->grc->get_type() == "turnstile") : ?>
+								<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+								<div class="cf-turnstile" data-sitekey="<?= $this->grc->get_site_key(); ?>" data-callback="javascriptCallback"></div>
 							<?php endif ?>
 						</div>
 					<?php endif ?>
 					<div class="col-sm-12">
-						<input type="submit" name="create" value="<?= $this->base->text('request', 'button') ?>" class="btn btn-primary btn-pill">
+						<button id="createButton" type="submit" name="create" value="<?= $this->base->text('request', 'button') ?>" class="btn btn-primary btn-pill" onclick="showLoading()">
+    					    <span id="spinner" class="spinner-border" role="status" aria-hidden="true" style="display: none;"></span>
+    					    <span id="buttonText"><?= $this->base->text('request', 'button') ?></span>
+    					</button>
+						<script>
+						function showLoading() {
+						    var spinner = document.getElementById('spinner');
+						    var buttonText = document.getElementById('buttonText');
+						    var submitButton = document.getElementById('createButton');
+						
+						    spinner.style.display = 'inline-block';
+						    buttonText.style.display = 'none';
+						    submitButton.classList.add('disabled');
+						}
+						</script>
 					</div>
 				</div>
 			</form>

@@ -98,7 +98,7 @@ if (isset($_GET['step']) and $_GET['step'] == 1) {
 						<h2 class="card-title text-center mb-3">Welcome to Xera!</h2>
 						<p class="text-muted mb-3">Xera has been installed successfully! Once you click on the button below, you will be redirected to the admin registration page and the install.php file will be deleted automatically.</p>
 						<div class="form-footer mt-1">
-							<a href="<?= $base_url ?>a/register" class="btn btn-primary w-100">Redirect</a>
+							<a href="<?= $base_url ?>admin/register" class="btn btn-primary w-100">Redirect</a>
 						</div>
 					</div>
 				<?php else : ?>
@@ -175,7 +175,7 @@ if (isset($_GET['step']) and $_GET['step'] == 1 and isset($_POST['submit'])) {
 
 		$sql = mysqli_query($mysqli, "DROP TABLE IF EXISTS `is_recaptcha`;");
 
-		$sql = mysqli_query($mysqli, "CREATE TABLE `is_recaptcha` (`recaptcha_id` varchar(89) NOT NULL DEFAULT 'xera_recaptcha',`recaptcha_site` varchar(100) NOT NULL,`recaptcha_key` varchar(100) NOT NULL,`recaptcha_status` varchar(8) NOT NULL,`recaptcha_type` varchar(6) NOT NULL
+		$sql = mysqli_query($mysqli, "CREATE TABLE `is_recaptcha` (`recaptcha_id` varchar(89) NOT NULL DEFAULT 'xera_recaptcha',`recaptcha_site` varchar(200) NOT NULL,`recaptcha_key` varchar(200) NOT NULL,`recaptcha_status` varchar(8) NOT NULL,`recaptcha_type` varchar(15) NOT NULL
 		);");
 
 		$sql = mysqli_query($mysqli, "INSERT INTO `is_recaptcha` (`recaptcha_id`,`recaptcha_site`,`recaptcha_key`,`recaptcha_status`,`recaptcha_type`
@@ -184,11 +184,11 @@ if (isset($_GET['step']) and $_GET['step'] == 1 and isset($_POST['submit'])) {
 
 		$sql = mysqli_query($mysqli, "DROP TABLE IF EXISTS `is_smtp`;");
 
-		$sql = mysqli_query($mysqli, "CREATE TABLE `is_smtp` (`smtp_id` varchar(9) NOT NULL DEFAULT 'xera_smtp',`smtp_hostname` varchar(100) NOT NULL,`smtp_username` varchar(100) NOT NULL,`smtp_password` varchar(100) NOT NULL,`smtp_port` varchar(8) NOT NULL,`smtp_from` varchar(100) NOT NULL,`smtp_status` varchar(8) NOT NULL,`smtp_name` varchar(50) NOT NULL
+		$sql = mysqli_query($mysqli, "CREATE TABLE `is_smtp` (`smtp_id` varchar(9) NOT NULL DEFAULT 'xera_smtp',`smtp_hostname` varchar(100) NOT NULL,`smtp_username` varchar(100) NOT NULL,`smtp_password` varchar(100) NOT NULL,`smtp_port` varchar(8) NOT NULL,`smtp_from` varchar(100) NOT NULL,`smtp_status` varchar(8) NOT NULL,`smtp_name` varchar(50) NOT NULL, `smtp_encryption` varchar(5) NOT NULL
 		);");
 
-		$sql = mysqli_query($mysqli, "INSERT INTO `is_smtp` (`smtp_id`,`smtp_hostname`,`smtp_username`,`smtp_password`,`smtp_port`,`smtp_from`,`smtp_status`,`smtp_name`
-		) VALUES ('xera_smtp','smtp.example.com','username','password','587','jhon@example.com','inactive','Web Host'
+		$sql = mysqli_query($mysqli, "INSERT INTO `is_smtp` (`smtp_id`,`smtp_hostname`,`smtp_username`,`smtp_password`,`smtp_port`,`smtp_from`,`smtp_status`,`smtp_name`,`smtp_encryption`
+		) VALUES ('xera_smtp','smtp.example.com','username','password','587','jhon@example.com','inactive','Web Host','none'
 		);");
 
 		$sql = mysqli_query($mysqli, "DROP TABLE IF EXISTS `is_mofh`;");
@@ -202,7 +202,7 @@ if (isset($_GET['step']) and $_GET['step'] == 1 and isset($_POST['submit'])) {
 
 		$sql = mysqli_query($mysqli, "DROP TABLE IF EXISTS `is_user`;");
 
-		$sql = mysqli_query($mysqli, "CREATE TABLE `is_user` (`user_id` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,`user_name` varchar(50) NOT NULL,`user_email` varchar(100) NOT NULL,`user_password` varchar(100) NOT NULL,`user_key` varchar(16) NOT NULL,`user_rec` varchar(32) NOT NULL,`user_status` varchar(8) NOT NULL,`user_date` varchar(20) NOT NULL, `user_oauth` varchar(10) NOT NULL DEFAULT 'disabled'
+		$sql = mysqli_query($mysqli, "CREATE TABLE `is_user` (`user_id` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,`user_name` varchar(100) NULL,`user_email` varchar(100) NOT NULL,`user_password` varchar(100) NOT NULL,`user_key` varchar(16) NOT NULL,`user_rec` varchar(32) NOT NULL,`user_status` varchar(8) NOT NULL,`user_date` varchar(20) NOT NULL, `user_oauth` varchar(10) NOT NULL DEFAULT 'disabled'
 		);");
 
 		$sql = mysqli_query($mysqli, "DROP TABLE IF EXISTS `is_admin`;");
@@ -295,10 +295,15 @@ if (isset($_GET['step']) and $_GET['step'] == 1 and isset($_POST['submit'])) {
 		) VALUES ('username','password','inactive'
 		);");
 
+		$sql = mysqli_query($mysqli, "DROP TABLE IF EXISTS `is_acme`;");
+
+		$sql = mysqli_query($mysqli, "CREATE TABLE `is_acme` (`acme_id` varchar(13) NOT NULL DEFAULT 'xera_acme', `acme_letsencrypt` varchar(100) NOT NULL, `acme_zerossl` varchar(1000) NOT NULL, `acme_googletrust` varchar(1000) NOT NULL, `acme_cloudflare` varchar(1000) NOT NULL, `acme_status` varchar(8) NOT NULL, `acme_dns` varchar(500) NULL);");
+
+		$sql = mysqli_query($mysqli, "INSERT INTO `is_acme` (`acme_letsencrypt`, `acme_zerossl`, `acme_googletrust`, `acme_cloudflare`, `acme_dns`, `acme_status`) VALUES ('not-set', 'not-set', 'not-set', 'not-set', '{\"doh\":\"active\",\"resolver\":\"dns.google\"}', 'inactive');");
+
 		$sql = mysqli_query($mysqli, "DROP TABLE IF EXISTS `is_ssl`;");
 
-		$sql = mysqli_query($mysqli, "CREATE TABLE `is_ssl` (`ssl_id` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,`ssl_pid` varchar(250) NOT NULL,`ssl_key` varchar(20) NOT NULL,`ssl_for` varchar(20) NOT NULL
-		);");
+		$sql = mysqli_query($mysqli, "CREATE TABLE `is_ssl` (`ssl_id` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,`ssl_pid` varchar(250) NOT NULL,`ssl_key` varchar(20) NOT NULL,`ssl_for` varchar(20) NOT NULL,`ssl_type` varchar(50) NOT NULL, `ssl_domain` varchar(250) NULL, `ssl_status` varchar(250) NULL, `ssl_dns` varchar(250) NOT NULL, `ssl_dnsid` varchar(250) NULL);");
 
 		$sql = mysqli_query($mysqli, "CREATE TABLE `is_oauth` (`oauth_id` varchar(20) NOT NULL, `oauth_client` varchar(100) NOT NULL, `oauth_secret` varchar(100) NOT NULL, `oauth_endpoint` varchar(100) NOT NULL, `oauth_status` varchar(8) NOT NULL);");
 		$sql = mysqli_query($mysqli, "INSERT INTO `is_oauth`(`oauth_id`, `oauth_client`, `oauth_secret`, `oauth_endpoint`, `oauth_status`) VALUES ('github', 'client key', 'client key', 'https://api.github.com/user', 'inactive');");

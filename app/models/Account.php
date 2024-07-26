@@ -14,11 +14,7 @@ class Account extends CI_Model
 		if($res !== false)
 		{
 			$list = [];
-			if($count == 0)
-			{
-				$count = 0;
-			}
-			else
+			if($count != 0)
 			{
 				$count = $count * $this->base->rpp();
 			}
@@ -233,9 +229,9 @@ class Account extends CI_Model
 			'is_account',
 			'account_'
 		);
-		if(count($res) > 0)
+		if($res)
 		{
-			return $res;
+			return true;
 		}
 		return false;
 	}

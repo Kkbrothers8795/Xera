@@ -9,6 +9,7 @@ class U extends CI_Controller
 		$this->load->model('ticket');
 		$this->load->model('account');
 		$this->load->model(['gogetssl' => 'ssl']);
+		$this->load->model(['acme' => 'acme']);
 		$this->load->model('mofh');
 		$this->load->model('oauth');
 		$this->load->model(['sitepro' => 'sp']);
@@ -56,9 +57,13 @@ class U extends CI_Controller
 					{
 						$this->fv->set_rules('CRLT-captcha-token', $this->base->text('recaptcha', 'label'), ['trim', 'required']);
 					}
-					else
+					elseif($this->grc->get_type() == "human")
 					{
 						$this->fv->set_rules('h-captcha-response', $this->base->text('recaptcha', 'label'), ['trim', 'required']);
+					}
+					elseif($this->grc->get_type() == "turnstile")
+					{
+						$this->fv->set_rules('cf-turnstile-response', $this->base->text('recaptcha', 'label'), ['trim', 'required']);
 					}
 					if($this->fv->run() === true)
 					{
@@ -74,6 +79,11 @@ class U extends CI_Controller
 						{
 							$token = $this->input->post('CRLT-captcha-token');
 							$type = "crypto";
+						}
+						elseif($this->grc->get_type() == "turnstile")
+						{
+							$token = $this->input->post('cf-turnstile-response');
+							$type = "turnstile";
 						}
 						else
 						{
@@ -194,9 +204,13 @@ class U extends CI_Controller
 					{
 						$this->fv->set_rules('CRLT-captcha-token', $this->base->text('recaptcha', 'label'), ['trim', 'required']);
 					}
-					else
+					elseif($this->grc->get_type() == "human")
 					{
 						$this->fv->set_rules('h-captcha-response', $this->base->text('recaptcha', 'label'), ['trim', 'required']);
+					}
+					elseif($this->grc->get_type() == "turnstile")
+					{
+						$this->fv->set_rules('cf-turnstile-response', $this->base->text('recaptcha', 'label'), ['trim', 'required']);
 					}
 					if($this->fv->run() === true)
 					{
@@ -212,6 +226,11 @@ class U extends CI_Controller
 						{
 							$token = $this->input->post('CRLT-captcha-token');
 							$type = "crypto";
+						}
+						elseif($this->grc->get_type() == "turnstile")
+						{
+							$token = $this->input->post('cf-turnstile-response');
+							$type = "turnstile";
 						}
 						else
 						{
@@ -471,6 +490,14 @@ class U extends CI_Controller
 				$this->session->set_flashdata('msg', json_encode([1, $this->base->text('theme_msg', 'success')]));
 				redirect('settings');
 			}
+			elseif($this->input->get('enable_oauth'))
+			{
+				if ($this->user->enable_oauth()) {
+				  redirect('https://github.com/login/oauth/authorize?client_id='.$this->oauth->get_client('github').'&scope=user,email');
+				}
+				$this->session->set_flashdata('msg', json_encode([0, $this->base->text('error_occured', 'error')]));
+				redirect('settings');
+			}
 			elseif($this->input->post('update_name'))
 			{
 				$this->fv->set_rules('name', $this->base->text('your_name', 'label'), ['trim', 'required', 'valid_name']);
@@ -594,9 +621,13 @@ class U extends CI_Controller
 					{
 						$this->fv->set_rules('CRLT-captcha-token', $this->base->text('recaptcha', 'label'), ['trim', 'required']);
 					}
-					else
+					elseif($this->grc->get_type() == "human")
 					{
 						$this->fv->set_rules('h-captcha-response', $this->base->text('recaptcha', 'label'), ['trim', 'required']);
+					}
+					elseif($this->grc->get_type() == "turnstile")
+					{
+						$this->fv->set_rules('cf-turnstile-response', $this->base->text('recaptcha', 'label'), ['trim', 'required']);
 					}
 					if($this->fv->run() === true)
 					{
@@ -611,6 +642,11 @@ class U extends CI_Controller
 						{
 							$token = $this->input->post('CRLT-captcha-token');
 							$type = "crypto";
+						}
+						elseif($this->grc->get_type() == "turnstile")
+						{
+							$token = $this->input->post('cf-turnstile-response');
+							$type = "turnstile";
 						}
 						else
 						{
@@ -760,9 +796,13 @@ class U extends CI_Controller
 					{
 						$this->fv->set_rules('CRLT-captcha-token', $this->base->text('recaptcha', 'label'), ['trim', 'required']);
 					}
-					else
+					elseif($this->grc->get_type() == "human")
 					{
 						$this->fv->set_rules('h-captcha-response', $this->base->text('recaptcha', 'label'), ['trim', 'required']);
+					}
+					elseif($this->grc->get_type() == "turnstile")
+					{
+						$this->fv->set_rules('cf-turnstile-response', $this->base->text('recaptcha', 'label'), ['trim', 'required']);
 					}
 						if($this->fv->run() === true)
 						{
@@ -776,6 +816,11 @@ class U extends CI_Controller
 							{
 								$token = $this->input->post('CRLT-captcha-token');
 								$type = "crypto";
+							}
+							elseif($this->grc->get_type() == "turnstile")
+							{
+								$token = $this->input->post('cf-turnstile-response');
+								$type = "turnstile";
 							}
 							else
 							{
@@ -854,11 +899,13 @@ class U extends CI_Controller
 			else
 			{
 				$data['title'] = 'view_ticket';
+                $data['id'] = $id;
 				$data['active'] = 'ticket';
 				$data['ticket'] = $this->ticket->view_user_ticket($id);
 				if($data['ticket'] !== false)
 				{
-					$data['replies'] = $this->ticket->get_ticket_reply($id);
+                    $count = $this->input->get('page') ?? 0;
+					$data['replies'] = $this->ticket->get_ticket_reply($id, $count);
 
 					$this->load->view($this->base->get_template().'/page/includes/user/header', $data);
 					$this->load->view($this->base->get_template().'/page/includes/user/navbar');
@@ -974,9 +1021,13 @@ class U extends CI_Controller
 					{
 						$this->fv->set_rules('CRLT-captcha-token', $this->base->text('recaptcha', 'label'), ['trim', 'required']);
 					}
-					else
+					elseif($this->grc->get_type() == "human")
 					{
 						$this->fv->set_rules('h-captcha-response', $this->base->text('recaptcha', 'label'), ['trim', 'required']);
+					}
+					elseif($this->grc->get_type() == "turnstile")
+					{
+						$this->fv->set_rules('cf-turnstile-response', $this->base->text('recaptcha', 'label'), ['trim', 'required']);
 					}
 						if($this->fv->run() === true)
 						{
@@ -991,6 +1042,11 @@ class U extends CI_Controller
 							{
 								$token = $this->input->post('CRLT-captcha-token');
 								$type = "crypto";
+							}
+							elseif($this->grc->get_type() == "turnstile")
+							{
+								$token = $this->input->post('cf-turnstile-response');
+								$type = "turnstile";
 							}
 							else
 							{
@@ -1398,11 +1454,11 @@ class U extends CI_Controller
 	{
 		if($this->user->is_logged())
 		{
-			if($this->ssl->is_active())
+			if($this->ssl->is_active() || $this->acme->is_active())
 			{
 				$data['title'] = 'ssl';
 				$data['active'] = 'ssl';
-				$data['list'] = $this->ssl->get_ssl_list();
+				$data['list'] = $this->acme->get_ssl_list();
 				
 				$this->load->view($this->base->get_template().'/page/includes/user/header', $data);
 				$this->load->view($this->base->get_template().'/page/includes/user/navbar');
@@ -1426,7 +1482,9 @@ class U extends CI_Controller
 		{
 			if($this->input->post('create'))
 			{
-				$this->fv->set_rules('csr', $this->base->text('csr_code', 'label'), ['trim', 'required']);
+				//$this->fv->set_rules('type', $this->base->text('ssl_type', 'label'), ['trim', 'required']);
+				$this->fv->set_rules('type', 'SSL Type', ['trim', 'required']);
+				$this->fv->set_rules('domain', $this->base->text('domain_name', 'label'), ['trim', 'required']);
 				if($this->grc->is_active())
 				{
 					if($this->grc->get_type() == "google")
@@ -1437,13 +1495,17 @@ class U extends CI_Controller
 					{
 						$this->fv->set_rules('CRLT-captcha-token', $this->base->text('recaptcha', 'label'), ['trim', 'required']);
 					}
-					else
+					elseif($this->grc->get_type() == "human")
 					{
 						$this->fv->set_rules('h-captcha-response', $this->base->text('recaptcha', 'label'), ['trim', 'required']);
 					}
+					elseif($this->grc->get_type() == "turnstile")
+					{
+						$this->fv->set_rules('cf-turnstile-response', $this->base->text('recaptcha', 'label'), ['trim', 'required']);
+					}
 					if($this->fv->run() === true)
 					{
-						$csr = $this->input->post('csr');
+						$domain = $this->input->post('domain');
 						if($this->grc->get_type() == "google")
 						{
 							$token = $this->input->post('g-recaptcha-response');
@@ -1454,6 +1516,11 @@ class U extends CI_Controller
 							$token = $this->input->post('CRLT-captcha-token');
 							$type = "crypto";
 						}
+						elseif($this->grc->get_type() == "turnstile")
+						{
+							$token = $this->input->post('cf-turnstile-response');
+							$type = "turnstile";
+						}
 						else
 						{
 							$token = $this->input->post('h-captcha-response');
@@ -1461,7 +1528,23 @@ class U extends CI_Controller
 						}
 						if($this->grc->is_valid($token, $type))
 						{
-							$res = $this->ssl->create_ssl($csr);
+							$type = $this->input->post('type');
+							if ($type == 'gogetssl') {
+								$res = $this->ssl->create_ssl($domain);
+							} else {
+								$res = $this->acme->initilize($type);
+								if (!is_bool($res))
+								{
+									$this->session->set_flashdata('msg', json_encode([0, $res]));
+									redirect('ssl/list');
+								} elseif(is_bool($res) AND $res == false)
+								{
+									$this->session->set_flashdata('msg', json_encode([0, $this->base->text('error_occured', 'error')]));
+									redirect('u/create_ssl');
+								}
+
+								$res = $this->acme->create_ssl($domain, $type);
+							}
 							if(!is_bool($res))
 							{
 								$this->session->set_flashdata('msg', json_encode([0, $res]));
@@ -1501,8 +1584,24 @@ class U extends CI_Controller
 				{
 					if($this->fv->run() === true)
 					{
-						$csr = $this->input->post('csr');
-						$res = $this->ssl->create_ssl($csr);
+						$domain = $this->input->post('domain');
+						$type = $this->input->post('type');
+						if ($type == 'gogetssl') {
+							$res = $this->ssl->create_ssl($domain);
+						} else {
+							$res = $this->acme->initilize($type);
+							if (!is_bool($res))
+							{
+								$this->session->set_flashdata('msg', json_encode([0, $res]));
+								redirect('ssl/list');
+							} elseif(is_bool($res) AND $res == false)
+							{
+								$this->session->set_flashdata('msg', json_encode([0, $this->base->text('error_occured', 'error')]));
+								redirect('u/create_ssl');
+							}
+
+							$res = $this->acme->create_ssl($domain, $type);
+						}
 						if(!is_bool($res))
 						{
 							$this->session->set_flashdata('msg', json_encode([0, $res]));
@@ -1535,10 +1634,11 @@ class U extends CI_Controller
 			}
 			else
 			{
-				if($this->ssl->is_active())
+				if($this->ssl->is_active() || $this->acme->is_active())
 				{
 					$data['title'] = 'create_ssl';
 					$data['active'] = 'ssl';
+					$data['acme_active'] = $this->acme->is_active();
 
 					$this->load->view($this->base->get_template().'/page/includes/user/header', $data);
 					$this->load->view($this->base->get_template().'/page/includes/user/navbar');
@@ -1564,12 +1664,20 @@ class U extends CI_Controller
 			$id = $this->security->xss_clean($id);
 			if($this->input->get('delete'))
 			{
-				$this->db->where(['key' => $id]);
+				if ($this->ssl->get_ssl_type($id) != 'gogetssl') {
+					$res = $this->acme->deleteRecord($id);
+					if($res !== true)
+					{
+						$this->session->set_flashdata('msg', json_encode([0, $this->base->text('error_occured', 'error')]));
+						redirect("ssl/view/$id");
+					}
+				}
+				$this->db->where(['ssl_key' => $id]);
 				$res = $this->db->delete('is_ssl');
 				if($res !== false)
 				{
 					$this->session->set_flashdata('msg', json_encode([1, $this->base->text('ssl_deleted_msg', 'success')]));
-					redirect("ssl/view/$id");
+					redirect("ssl/list");
 				}
 				else
 				{
@@ -1579,7 +1687,28 @@ class U extends CI_Controller
 			}
 			elseif($this->input->get('cancel'))
 			{
-				$res = $this->ssl->cancel_ssl($id, 'Some Reason');
+				$ssl_type = $this->ssl->get_ssl_type($id);
+				if ($ssl_type == 'gogetssl') {
+					$res = $this->ssl->cancel_ssl($id, 'Some Reason');
+				} else {
+					$res = $this->acme->initilize($ssl_type);
+					if(!is_bool($res))
+					{
+						$this->session->set_flashdata('msg', json_encode([0, $res]));
+						redirect("ssl/view/$id");
+					}
+					elseif(is_bool($res) AND $res == true)
+					{
+						$this->session->set_flashdata('msg', json_encode([1, $this->base->text('ssl_cancelled_msg', 'success')]));
+						redirect("ssl/view/$id");
+					}
+					else
+					{
+						$this->session->set_flashdata('msg', json_encode([0, $this->base->text('error_occured', 'error')]));
+						redirect("ssl/view/$id");
+					}
+					$res = $this->acme->cancel_ssl($id, 'Some Reason');
+				}
 				if(!is_bool($res))
 				{
 					$this->session->set_flashdata('msg', json_encode([0, $res]));
@@ -1596,14 +1725,54 @@ class U extends CI_Controller
 					redirect("ssl/view/$id");
 				}
 			}
+			elseif($this->input->get('validate'))
+			{
+				$ssl_type = $this->ssl->get_ssl_type($id);
+				$res = $this->acme->initilize($ssl_type);
+				if(!is_bool($res))
+				{
+					$this->session->set_flashdata('msg', json_encode([0, $res]));
+					redirect("ssl/view/$id");
+				}
+				elseif(is_bool($res) AND $res == true)
+				{
+				}
+				else
+				{
+					$this->session->set_flashdata('msg', json_encode([0, $this->base->text('error_occured', 'error')]));
+					redirect("ssl/view/$id");
+				}
+
+				$res = $this->acme->validateOrder($id);
+				if(!is_bool($res))
+				{
+					$this->session->set_flashdata('msg', json_encode([0, $res]));
+					redirect("ssl/view/$id");
+				}
+				elseif(is_bool($res) AND $res == true)
+				{
+					$this->session->set_flashdata('msg', json_encode([1, $this->base->text('ssl_validated_msg', 'success')]));
+					redirect("ssl/view/$id");
+				}
+				else
+				{
+					$this->session->set_flashdata('msg', json_encode([0, $this->base->text('error_occured', 'error')]));
+					redirect("ssl/view/$id");
+				}
+			}
 			else
 			{
-				if($this->ssl->is_active())
+				if($this->ssl->is_active() || $this->acme->is_active())
 				{
 					$data['title'] = 'view_ssl';
 					$data['active'] = 'ssl';
 					$data['id'] = $id;
-					$data['data'] = $this->ssl->get_ssl_info($id);
+					$ssl_type = $this->ssl->get_ssl_type($id);
+					if ($ssl_type == 'gogetssl') {
+						$data['data'] = $this->ssl->get_ssl_info($id);
+					} else {
+						$data['data'] = $this->acme->get_ssl_info($id);
+					}
 					if($data['data'] !== false)
 					{
 						$this->load->view($this->base->get_template().'/page/includes/user/header', $data);
@@ -1616,9 +1785,14 @@ class U extends CI_Controller
 						redirect('404');
 					}
 				}
-				else
+				elseif ($data['data'] == False)
 				{
-					redirect('user');
+					$this->session->set_flashdata('msg', json_encode([0, $this->base->text('error_occured', 'error')]));
+					redirect("ssl/list");
+				} else
+				{
+					$this->session->set_flashdata('msg', json_encode([0, $data['data']]));
+					redirect("ssl/list");
 				}
 			}
 		}
@@ -1678,7 +1852,7 @@ class U extends CI_Controller
 					'host' => $this->base->text('host', 'table'),
 					'type' => $this->base->text('type', 'table'),
 					'ttl' => $this->base->text('ttl', 'table'),
-					'content' => $this->base->text('content', 'table')
+					'txt' => $this->base->text('content', 'table')
 				],
 				'MX' => [
 					'host' => $this->base->text('host', 'table'),

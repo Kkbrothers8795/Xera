@@ -42,3 +42,5 @@ $lang['ip'] = 'IP Address';
 $lang['target'] = 'Target';
 $lang['content'] = 'Content';
 $lang['pri'] = 'Preference';
+$lang['provider'] = 'Fournisseur';
+$lang['ready'] = 'Prêt';

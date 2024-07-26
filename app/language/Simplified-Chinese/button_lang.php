@@ -35,3 +35,5 @@ $lang['add_reply'] = '新增回覆';
 $lang['lookup'] = 'Lookup';
 $lang['redirect_now'] = '现在导向';
 $lang['github_signin'] = 'Sign in with GitHub';
+$lang['close'] = '关闭';
+$lang['validate'] = '验证SSL';

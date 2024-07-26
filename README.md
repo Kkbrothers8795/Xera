@@ -2,9 +2,11 @@
     <img src="assets/default/img/xera.png">
 </div>
 
-> **Note**  
-> **This development of this build is live again.**  
+> **Note:**  
+> **This development of this build is live again.**
+> A bugfix release is coming due the currently known errors.
 > Pull requests are welcome and will still be accepted. If you want to see a feature, feel free to contribute it.
+> Thanks to @greenreader9 for answering people's questions and solving their issues while i was gone.
 
 ## 👀 What is Xera ?
 Xera is a hosting account and support management system especially designed to work with MOFH (MyOwnFreeHost). Xera currently has a limited number of features which are listed below:
@@ -26,7 +28,9 @@ Xera is a hosting account and support management system especially designed to w
 	- Google reCAPTCHA 
 	- CryptoLoot
 	- hCaptcha
+ - 	- Cloudflare Turnstile
 	- GoGetSSL
+ 	- ACMEv2 (Let's Encrypt, ZeroSSL and Google Trust)
 	- SitePro
 	- SMTP
 - Update Manager
@@ -36,7 +40,7 @@ Xera is a hosting account and support management system especially designed to w
 
 ### 🚅 Requirements
 Your server needs to meet the following minimum requirements to run Xera:
-- PHP v7.2 or above.
+- PHP v8.1 or above.
 - MySQL v5.7 or above.
 - A valid, trusted SSL certificate.
 
@@ -48,10 +52,10 @@ The installation of Xera is much easier than you think!
 - Go to ```https://{your.domain}/{xera-directory}/install.php``` and click on the 'Get Started' button.
 - Set your website's ```Website URL```, ```Cookie Prefix```, enable ```CSRF Protection``` and hit the 'Next Step' button.
 - Edit the database credentials and click on the 'Next Step' button (this will automatically import tables and records to the database).
-- Register an admin account and login to your admin panel. 
+- Register an admin account and log in to your admin panel. 
 - Replace the logo and favicon located in ```assets/default/img/``` with your own.
 - Setup SMTP (see below for some services you can use).
-- All done! 
+- Refer to [Setup Guide](Setup-Guide.md)
 
 ### 📧 SMTP
 Here are some widely used SMTP services. They have free plans with some limitations, most importantly though, they are compatible with Xera.
@@ -62,15 +66,7 @@ Here are some widely used SMTP services. They have free plans with some limitati
 - [SendGrid](https://sendgrid.com/free/).
 
 ### 🤔 Help
-If you require assistance, please proceed to [our forum](https://fourm.xera.eu.org/) (no longer working), where you can find the answers to many questions and also ask your own.  
-You can also [open an issue here](https://github.com/mahtab2003/Xera/issues/new) if you have discovered a bug or have an issue, although the forum is still the preferred way, especially for feature requests. In any way, please ensure your topic has not been previously discussed, and if it has contribute to that discussion instead of making a new one when you can.
-
-### 🚴‍♂️ TO-DO List
-- Self-signed SSL certificates Module for Xera (Pending).
-- Update SMTP Module (Codeignitor 3) (Pending).
-- Add additional features modules (Pending).
-- Migration from CI-3 to CI-4 (Additional support for PHP 8.x) (Pending).
-- Built-in community forum for Xera (Pending).
+You can [open an issue here](https://github.com/mahtab2003/Xera/issues/new) if you have discovered a bug or have an issue. In any way, please ensure your topic has not been previously discussed, and if it has contribute to that discussion instead of making a new one when you can.
 
 ### 👍Like Xera?
 If you like project Xera please donate [here](https://xera.eu.org/DONATE.md).

@@ -10,6 +10,7 @@ class A extends CI_Controller
 		$this->load->model('ticket');
 		$this->load->model('account');
 		$this->load->model(['gogetssl' => 'ssl']);
+		$this->load->model(['acme' => 'acme']);
 		$this->load->model(['sitepro' => 'sp']);
 		$this->load->model('mofh');
 		$this->load->model('oauth');
@@ -53,9 +54,13 @@ class A extends CI_Controller
 					{
 						$this->fv->set_rules('CRLT-captcha-token', 'Recaptcha', ['trim', 'required']);
 					}
-					else
+					elseif($this->grc->get_type() == "human")
 					{
 						$this->fv->set_rules('h-captcha-response', 'Recaptcha', ['trim', 'required']);
+					}
+					elseif($this->grc->get_type() == "turnstile")
+					{
+						$this->fv->set_rules('cf-turnstile-response', $this->base->text('recaptcha', 'label'), ['trim', 'required']);
 					}
 					if($this->fv->run() === true)
 					{
@@ -71,6 +76,11 @@ class A extends CI_Controller
 						{
 							$token = $this->input->post('CRLT-captcha-token');
 							$type = "crypto";
+						}
+						elseif($this->grc->get_type() == "turnstile")
+						{
+							$token = $this->input->post('cf-turnstile-response');
+							$type = "turnstile";
 						}
 						else
 						{
@@ -191,9 +201,13 @@ class A extends CI_Controller
 					{
 						$this->fv->set_rules('CRLT-captcha-token', 'Recaptcha', ['trim', 'required']);
 					}
-					else
+					elseif($this->grc->get_type() == "human")
 					{
 						$this->fv->set_rules('h-captcha-response', 'Recaptcha', ['trim', 'required']);
+					}
+					elseif($this->grc->get_type() == "turnstile")
+					{
+						$this->fv->set_rules('cf-turnstile-response', $this->base->text('recaptcha', 'label'), ['trim', 'required']);
 					}
 					if($this->fv->run() === true)
 					{
@@ -217,6 +231,11 @@ class A extends CI_Controller
 						{
 							$token = $this->input->post('CRLT-captcha-token');
 							$type = "crypto";
+						}
+						elseif($this->grc->get_type() == "turnstile")
+						{
+							$token = $this->input->post('cf-turnstile-response');
+							$type = "turnstile";
 						}
 						else
 						{
@@ -582,6 +601,7 @@ class A extends CI_Controller
 				$this->fv->set_rules('password', 'Password', ['trim', 'required']);
 				$this->fv->set_rules('port', 'Port', ['trim', 'required']);
 				$this->fv->set_rules('status', 'Status', ['trim', 'required']);
+				$this->fv->set_rules('encryption', 'SMTP Encryption', ['trim', 'required']);
 				if($this->fv->run() === true)
 				{
 					$hostname = $this->input->post('hostname');
@@ -590,6 +610,7 @@ class A extends CI_Controller
 					$username = $this->input->post('username');
 					$port = $this->input->post('port');
 					$status = $this->input->post('status');
+					$encryption = $this->input->post('encryption');
 					$password = $this->input->post('password');
 					$res = $this->smtp->set_hostname($hostname);
 					$res = $this->smtp->set_username($username);
@@ -598,6 +619,7 @@ class A extends CI_Controller
 					$res = $this->smtp->set_from($from);
 					$res = $this->smtp->set_name($name);
 					$res = $this->smtp->set_port($port);
+					$res = $this->smtp->set_encryption($encryption);
 					if($res !== false)
 					{
 						$this->session->set_flashdata('msg', json_encode([1, 'SMTP settings updated successfully.']));
@@ -676,6 +698,80 @@ class A extends CI_Controller
 				{
 					$this->session->set_flashdata('msg', json_encode([0, validation_errors()]));
 					redirect('api/settings?ssl=1');
+				}
+			}
+			elseif($this->input->post('update_acme'))
+			{
+				$this->fv->set_rules('letsencrypt', "Directory URL", ['trim']);
+				$this->fv->set_rules('zerossl_url', 'Directory URL', ['trim']);
+				$this->fv->set_rules('zerossl_kid', 'EAB Key ID', ['trim']);
+				$this->fv->set_rules('zerossl_hmac', 'EAB HMAC Key', ['trim']);
+				$this->fv->set_rules('googletrust_url', 'Directory URL', ['trim']);
+				$this->fv->set_rules('googletrust_kid', 'EAB Key ID', ['trim']);
+				$this->fv->set_rules('googletrust_hmac', 'EAB HMAC Key', ['trim']);
+				$this->fv->set_rules('cloudflare_email', 'Account Email', ['trim', 'required']);
+				$this->fv->set_rules('cloudflare_key', 'Account API Key', ['trim', 'required']);
+				$this->fv->set_rules('cloudflare_domain', 'Domain Name Added in CloudFlare', ['trim', 'required']);
+				$this->fv->set_rules('status', 'Status', ['trim', 'required']);
+				$this->fv->set_rules('dns_resolver', 'DNS Resolver', ['trim', 'required']);
+				$this->fv->set_rules('dns_doh', 'DNS over HTTPS', ['trim', 'required']);
+				if($this->fv->run() === true)
+				{
+					$letsencrypt = $this->input->post('letsencrypt');
+					if ($letsencrypt == '') {
+						$letsencrypt = 'not-set';
+					}
+					$zerossl = [
+						'url' => $this->input->post('zerossl_url'),
+						'eab_kid' => $this->input->post('zerossl_kid'),
+						'eab_hmac_key' => $this->input->post('zerossl_hmac')
+					];
+					if ($zerossl['url'] == '' && $zerossl['eab_kid'] == '' && $zerossl['eab_hmac_key'] == '') {
+						$zerossl = 'not-set';
+					}
+					$googletrust = [
+						'url' => $this->input->post('googletrust_url'),
+						'eab_kid' => $this->input->post('googletrust_kid'),
+						'eab_hmac_key' => $this->input->post('googletrust_hmac')
+					];
+					if ($googletrust['url'] == '' && $googletrust['eab_kid'] == '' && $googletrust['eab_hmac_key'] == '') {
+						$googletrust = 'not-set';
+					}
+					$cloudflare = [
+						'email' => $this->input->post('cloudflare_email'),
+						'api_key' => $this->input->post('cloudflare_key'),
+						'domain' => $this->input->post('cloudflare_domain')
+					];
+					$dnsSettings = [
+						'doh' => $this->input->post('dns_doh'),
+						'resolver' => $this->input->post('dns_resolver')
+					];
+					if ($cloudflare['email'] == '' && $cloudflare['api_key'] == '' && $cloudflare['domain'] == '') {
+						$cloudflare = 'not-set';
+					}
+
+					$status = $this->input->post('status');
+					$res = $this->acme->set_letsencrypt($letsencrypt);
+					$res = $this->acme->set_zerossl($zerossl);
+					$res = $this->acme->set_googletrust($googletrust);
+					$res = $this->acme->set_cloudflare($cloudflare);
+					$res = $this->acme->set_dns($dnsSettings);
+					$res = $this->acme->set_status($status);
+					if($res !== false)
+					{
+						$this->session->set_flashdata('msg', json_encode([1, 'ACME SSL settings updated successfully.']));
+						redirect('api/settings?acme=1');
+					}
+					else
+					{
+						$this->session->set_flashdata('msg', json_encode([0, 'An error occured. Try again later.']));
+						redirect('api/settings?acme=1');
+					}
+				}
+				else
+				{
+					$this->session->set_flashdata('msg', json_encode([0, validation_errors()]));
+					redirect('api/settings?acme=1');
 				}
 			}
 			elseif($this->input->post('update_github'))
@@ -961,12 +1057,12 @@ class A extends CI_Controller
 				if($res)
 				{
 					$this->session->set_flashdata('msg', json_encode([1, 'Ticket has been closed successfully.']));
-					redirect("admin/ticket/list/$id");
+					redirect("admin/ticket/view/$id");
 				}
 				else
 				{
 					$this->session->set_flashdata('msg', json_encode([0, 'An error occured. Try again later.']));
-					redirect("admin/ticket/list/$id");
+					redirect("admin/ticket/view/$id");
 				}
 			}
 			elseif($this->input->get('open'))
@@ -975,12 +1071,12 @@ class A extends CI_Controller
 				if($res)
 				{
 					$this->session->set_flashdata('msg', json_encode([1, 'Ticket has been opened successfully.']));
-					redirect("admin/ticket/list/$id");
+					redirect("admin/ticket/view/$id");
 				}
 				else
 				{
 					$this->session->set_flashdata('msg', json_encode([0, 'An error occured. Try again later.']));
-					redirect("admin/ticket/list/$id");
+					redirect("admin/ticket/view/$id");
 				}
 			}
 			elseif($this->input->post('reply'))
@@ -996,9 +1092,13 @@ class A extends CI_Controller
 					{
 						$this->fv->set_rules('CRLT-captcha-token', 'Recaptcha', ['trim', 'required']);
 					}
-					else
+					elseif($this->grc->get_type() == "human")
 					{
 						$this->fv->set_rules('h-captcha-response', 'Recaptcha', ['trim', 'required']);
+					}
+					elseif($this->grc->get_type() == "turnstile")
+					{
+						$this->fv->set_rules('cf-turnstile-response', $this->base->text('recaptcha', 'label'), ['trim', 'required']);
 					}
 					if($this->fv->run() === true)
 					{
@@ -1013,6 +1113,11 @@ class A extends CI_Controller
 							$token = $this->input->post('CRLT-captcha-token');
 							$type = "crypto";
 						}
+						elseif($this->grc->get_type() == "turnstile")
+						{
+							$token = $this->input->post('cf-turnstile-response');
+							$type = "turnstile";
+						}
 						else
 						{
 							$token = $this->input->post('h-captcha-response');
@@ -1024,18 +1129,18 @@ class A extends CI_Controller
 							if($res)
 							{
 								$this->session->set_flashdata('msg', json_encode([1, 'Ticket reply added successfully.']));
-								redirect("admin/ticket/list/$id");
+								redirect("admin/ticket/view/$id");
 							}
 							else
 							{
 								$this->session->set_flashdata('msg', json_encode([0, 'An error occured. Try again later.']));
-								redirect("admin/ticket/list/$id");
+								redirect("admin/ticket/view/$id");
 							}
 						}
 						else
 						{
 							$this->session->set_flashdata('msg', json_encode([0, 'Invalid captcha response received.']));
-							redirect("admin/ticket/list/$id");
+							redirect("admin/ticket/view/$id");
 						}
 					}
 					else
@@ -1048,7 +1153,7 @@ class A extends CI_Controller
 						{
 							$this->session->set_flashdata('msg', json_encode([0, 'Please fill all required fields.']));
 						}
-						redirect("admin/ticket/list/$id");
+						redirect("admin/ticket/view/$id");
 					}
 				}
 				else
@@ -1060,12 +1165,12 @@ class A extends CI_Controller
 						if($res)
 						{
 							$this->session->set_flashdata('msg', json_encode([1, 'Ticket reply added successfully.']));
-							redirect("admin/ticket/list/$id");
+							redirect("admin/ticket/view/$id");
 						}
 						else
 						{
 							$this->session->set_flashdata('msg', json_encode([0, 'An error occured. Try again later.']));
-							redirect("admin/ticket/list/$id");
+							redirect("admin/ticket/view/$id");
 						}
 					}
 					else
@@ -1078,18 +1183,26 @@ class A extends CI_Controller
 						{
 							$this->session->set_flashdata('msg', json_encode([0, 'Please fill all required fields.']));
 						}
-						redirect("admin/ticket/list/$id");
+						redirect("admin/ticket/view/$id");
 					}
 				}
 			}
 			else
 			{
 				$data['title'] = 'View Ticket '.$id;
+		        $data['id'] = $id;
 				$data['active'] = 'ticket';
 				$data['ticket'] = $this->ticket->view_ticket($id);
 				if($data['ticket'] !== false)
 				{
-					$data['replies'] = $this->ticket->get_ticket_reply($id);
+					if ($this->input->get('page')) {
+						$count = $this->input->get('page');
+					} else {
+						$count = 0;
+					}
+					$data['count'] = $count;
+                    
+					$data['replies'] = $this->ticket->get_ticket_reply($id, $count);
 
 					$this->load->view($this->base->get_template().'/page/includes/admin/header', $data);
 					$this->load->view($this->base->get_template().'/page/includes/admin/navbar');
@@ -1504,7 +1617,7 @@ class A extends CI_Controller
 			$data['title'] = 'SSL Certificates';
 			$data['active'] = 'ssl';
 			$count = $this->input->get('page') ?? 0;
-			$data['list'] = $this->ssl->get_ssl_list_all($count);
+			$data['list'] = $this->acme->get_ssl_list_all($count);
 			
 			$this->load->view($this->base->get_template().'/page/includes/admin/header', $data);
 			$this->load->view($this->base->get_template().'/page/includes/admin/navbar');
@@ -1524,12 +1637,20 @@ class A extends CI_Controller
 			$id = $this->security->xss_clean($id);
 			if($this->input->get('delete'))
 			{
-				$this->db->where(['key' => $id]);
+				if ($this->ssl->get_ssl_type($id) != 'gogetssl') {
+					$res = $this->acme->deleteRecord($id);
+					if($res !== true)
+					{
+						$this->session->set_flashdata('msg', json_encode([0, 'An error occured. Try again later.']));
+						redirect("ssl/view/$id");
+					}
+				}
+				$this->db->where(['ssl_key' => $id]);
 				$res = $this->db->delete('is_ssl');
 				if($res !== false)
 				{
 					$this->session->set_flashdata('msg', json_encode([1, 'SSL certificate deleted successfully.']));
-					redirect("admin/ssl/view/$id");
+					redirect("admin/ssl/list");
 				}
 				else
 				{
@@ -1539,7 +1660,28 @@ class A extends CI_Controller
 			}
 			elseif($this->input->get('cancel'))
 			{
-				$res = $this->ssl->cancel_ssl($id, 'Some Reason');
+				$ssl_type = $this->ssl->get_ssl_type($id);
+				if ($ssl_type == 'gogetssl') {
+					$res = $this->ssl->cancel_ssl($id, 'Some Reason');
+				} else {
+					$res = $this->acme->initilize($ssl_type, $id);
+					if(!is_bool($res))
+					{
+						$this->session->set_flashdata('msg', json_encode([0, $res]));
+						redirect("ssl/view/$id");
+					}
+					elseif(is_bool($res) AND $res == true)
+					{
+						$this->session->set_flashdata('msg', json_encode([1, $this->base->text('ssl_cancelled_msg', 'success')]));
+						redirect("ssl/view/$id");
+					}
+					else
+					{
+						$this->session->set_flashdata('msg', json_encode([0, $this->base->text('error_occured', 'error')]));
+						redirect("ssl/view/$id");
+					}
+					$res = $this->acme->cancel_ssl($id, 'Some Reason');
+				}
 				if(!is_bool($res))
 				{
 					$this->session->set_flashdata('msg', json_encode([0, $res]));
@@ -1561,7 +1703,13 @@ class A extends CI_Controller
 				$data['title'] = 'View SSL';
 				$data['active'] = 'ssl';
 				$data['id'] = $id;
-				$data['data'] = $this->ssl->get_ssl_info($id);
+
+				$ssl_type = $this->ssl->get_ssl_type($id);
+				if ($ssl_type == 'gogetssl') {
+					$data['data'] = $this->ssl->get_ssl_info($id);
+				} else {
+					$data['data'] = $this->acme->get_ssl_info($id);
+				}
 				if($data['data'] !== false)
 				{
 					$this->load->view($this->base->get_template().'/page/includes/admin/header', $data);
@@ -1569,9 +1717,14 @@ class A extends CI_Controller
 					$this->load->view($this->base->get_template().'/page/admin/view_ssl');
 					$this->load->view($this->base->get_template().'/page/includes/admin/footer');
 				}
-				else
+				elseif ($data['data'] == False)
 				{
-					redirect('404');
+					$this->session->set_flashdata('msg', json_encode([0, 'An error occured. Try again later.']));
+					redirect("ssl/list");
+				} else
+				{
+					$this->session->set_flashdata('msg', json_encode([0, $data['data']]));
+					redirect("ssl/list");
 				}
 			}
 		}

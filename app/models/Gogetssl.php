@@ -9,12 +9,37 @@ class Gogetssl extends CI_Model
 		$this->s = new GoGetSSLApi();
 		$this->s->auth($this->get_username(), $this->get_password());
 	}
+ 
+    function create_csr($domain) {
+        $data = array(
+            'csr_commonname' => $domain,
+            'csr_organization' => $this->base->get_hostname(),
+            'csr_department' => 'IT',
+            'csr_city' => 'North Meaghanton',
+            'csr_state' => 'New Hampshire',
+            'csr_country' => 'US',
+            'csr_email' => $this->user->get_email()
+        );
+        $res = $this->s->generateCSR($data);
+        if (array_key_exists('success', $res)) {
+            $return = array(
+                'csr_code' => $res['csr_code'],
+                'private_key' => $res['csr_key']
+            );
+            return $return;
+        }
+        return false;
+    }
 
 	function create_ssl($csr)
 	{
+        $csr = $this->create_csr($csr);
+        if ($csr == false) {
+           return false;
+        }
 		$data = array(
 			'product_id'       => 65,
-			'csr' 			   => $csr,
+			'csr' 			   => $csr['csr_code'],
 		    'server_count'     => "-1",
 		    'period'           => 3,
 		    'approver_email'   => $this->get_username(),
@@ -46,11 +71,15 @@ class Gogetssl extends CI_Model
 			$data = [
 				'ssl_pid' => $res['order_id'],
 				'ssl_key' => $key,
-				'ssl_for' => $this->user->get_key()
+				'ssl_for' => $this->user->get_key(),
+				'ssl_type' => 'gogetssl'
 			];
 			$res = $this->db->insert('is_ssl', $data);
 			if($res !== false)
 			{
+				$privateDir = './acme-storage/'.$this->user->get_email().'/certificates/'.$key.'.priv.pem';
+            	$privateKey = $csr['private_key'];
+            	file_put_contents($privateDir, $privateKey);
 				return true;
 			}
 			return false;
@@ -72,8 +101,25 @@ class Gogetssl extends CI_Model
 		if($res !== [])
 		{
 			$data = $this->s->getOrderStatus($res[0]['ssl_pid']);
+			$userKey = $res[0]['ssl_for'];
+			$res2 = $this->base->fetch(
+				'is_user',
+				['key' => $userKey],
+				'user_'
+			);
+			if ($res2 == [] && $res2 == False) {
+				return False;
+			}
+			$privateDir = './acme-storage/'.$res2[0]['user_email'].'/certificates/'.$key.'.priv.pem';
+        	if (!file_exists($privateDir)) {
+        	    return false;
+        	} else {
+        	    $data['private_key'] =  file_get_contents($privateDir);
+        	}
+
 			if(count($data) > 4)
 			{
+				$data['type'] = 'GoGetSSL';
 				return $data;
 			}
 			else
@@ -89,6 +135,20 @@ class Gogetssl extends CI_Model
 		return false;
 	}
 
+	function get_ssl_type($key)
+	{
+		$res = $this->fetch(['key' => $key]);
+		if($res !== [])
+		{
+			return $res[0]['ssl_type'];
+		}
+		return false;
+	}
+
+	function getStatus($id) {
+		return $this->s->getOrderStatus($id);
+	}
+
 	function get_ssl_list()
 	{
 		$res = $this->fetch(['for' => $this->user->get_key()]);
@@ -100,6 +160,7 @@ class Gogetssl extends CI_Model
 				foreach ($res as $key) {
 					$data = $this->s->getOrderStatus($key['ssl_pid']);
 					$data['key'] = $key['ssl_key'];
+					$data['type'] = "GoGetSSL";
 					$arr[] = $data;
 				}
 				return $arr;
@@ -120,16 +181,13 @@ class Gogetssl extends CI_Model
 				foreach ($res as $key) {
 					$data = $this->s->getOrderStatus($key['ssl_pid']);
 					$data['key'] = $key['ssl_key'];
+					$data['type'] = "GoGetSSL";
 					$arr[] = $data;
 				}
 				return $arr;
 			}
 			$list = [];
-			if($count == 0)
-			{
-				$count = 0;
-			}
-			else
+			if($count != 0)
 			{
 				$count = $count * $this->base->rpp();
 			}
@@ -159,6 +217,7 @@ class Gogetssl extends CI_Model
 				foreach ($res as $key) {
 					$data = $this->s->getOrderStatus($key['ssl_pid']);
 					$data['key'] = $key['ssl_key'];
+					$data['type'] = "GoGetSSL";
 					$arr[] = $data;
 				}
 			}

@@ -36,10 +36,10 @@ DROP TABLE IF EXISTS `is_recaptcha`;
 
 CREATE TABLE `is_recaptcha` (
 	`recaptcha_id` varchar(89) NOT NULL DEFAULT 'xera_recaptcha',
-	`recaptcha_site` varchar(100) NOT NULL,
-	`recaptcha_key` varchar(100) NOT NULL,
+	`recaptcha_site` varchar(200) NOT NULL,
+	`recaptcha_key` varchar(200) NOT NULL,
 	`recaptcha_status` varchar(8) NOT NULL,
-	`recaptcha_type` varchar(6) NOT NULL DEFAULT 'google'
+	`recaptcha_type` varchar(15) NOT NULL DEFAULT 'google'
 );
 
 -- Insert default record for `is_recaptcha`
@@ -70,7 +70,8 @@ CREATE TABLE `is_smtp` (
 	`smtp_port` varchar(8) NOT NULL,
 	`smtp_from` varchar(100) NOT NULL,
 	`smtp_status` varchar(8) NOT NULL,
-	`smtp_name` varchar(50) NOT NULL
+	`smtp_name` varchar(50) NOT NULL,
+	`smtp_encryption` varchar(5) NOT NULL
 );
 
 -- Insert default record for `is_smtp`
@@ -135,7 +136,7 @@ DROP TABLE IF EXISTS `is_user`;
 
 CREATE TABLE `is_user` (
 	`user_id` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
-	`user_name` varchar(50) NOT NULL,
+	`user_name` varchar(100) NULL,
 	`user_email` varchar(100) NOT NULL,
 	`user_password` varchar(100) NOT NULL,
 	`user_key` varchar(16) NOT NULL,
@@ -467,6 +468,36 @@ INSERT INTO `is_gogetssl` (
 	'inactive'
 );
 
+-- Create new table `is_acme`
+
+DROP TABLE IF EXISTS `is_acme`;
+
+CREATE TABLE `is_acme` (
+	`acme_id` varchar(13) NOT NULL DEFAULT 'xera_acme',
+	`acme_letsencrypt` varchar(100) NOT NULL,
+	`acme_zerossl` varchar(1000) NOT NULL,
+	`acme_googletrust` varchar(1000) NOT NULL,
+	`acme_cloudflare` varchar(1000) NOT NULL,
+	`acme_status` varchar(8) NOT NULL,
+	`acme_dns` varchar(500) NULL
+);
+
+INSERT INTO `is_acme` (
+	`acme_letsencrypt`,
+	`acme_zerossl`,
+	`acme_googletrust`,
+	`acme_cloudflare`,
+	`acme_status`,
+	`acme_dns`
+) VALUES (
+	'not-set',
+	'not-set',
+	'not-set',
+	'not-set',
+	'inactive',
+	'{"doh":"active","resolver":"dns.google"}',
+);
+
 -- Create new table `is_ssl`
 
 DROP TABLE IF EXISTS `is_ssl`;
@@ -475,7 +506,13 @@ CREATE TABLE `is_ssl` (
 	`ssl_id` int(11) NOT NULL PRIMARY KEY AUTO_INCREMENT,
 	`ssl_pid` varchar(250) NOT NULL,
 	`ssl_key` varchar(20) NOT NULL,
-	`ssl_for` varchar(20) NOT NULL
+	`ssl_for` varchar(20) NOT NULL,
+	`ssl_private` varchar(5000) NOT NULL,
+	`ssl_type` varchar(50) NULL,
+	`ssl_domain` varchar(250) NULL,
+	`ssl_status` varchar(250) NULL,
+	`ssl_dns` varchar(250) NOT NULL,
+	`ssl_dnsid` varchar(250) NULL
 );
 
 -- Create new table `is_oauth`

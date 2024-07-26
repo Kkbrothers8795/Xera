@@ -32,6 +32,11 @@
 				<?php endif ?>" data-bs-toggle="tab"><em class="fa fa-shield-alt me-2"></em>SSL Certificates</a>
 			</li>
 			<li class="nav-item">
+				<a href="#acme" class="nav-link <?php if ($this->input->get('acme')) : ?>
+					active
+				<?php endif ?>" data-bs-toggle="tab"><em class="fa fa-shield-alt me-2"></em>SSL Certificates (ACME)</a>
+			</li>
+			<li class="nav-item">
 				<a href="#sitepro" class="nav-link <?php if ($this->input->get('sitepro')) : ?>
 					active
 				<?php endif ?>" data-bs-toggle="tab"><em class="fa fa-brush me-2"></em>Site Builder</a>
@@ -135,7 +140,7 @@
 					</div>
 					<div class="col-sm-6">
 						<label class="form-label">Callback URL</label>
-						<input type="text" name="callback" class="form-control mb-2" value="<?= str_replace('https', 'http', base_url()) ?>c/mofh" readonly>
+						<input type="text" name="callback" class="form-control mb-2" value="<?= base_url() ?>c/mofh" readonly>
 					</div>
 					<div class="col-sm-12">
 						<input type="submit" name="update_mofh" value="Change" class="btn btn-primary btn-pill">
@@ -179,6 +184,34 @@
 						<label class="form-label">SMTP Port</label>
 						<input type="number" name="port" class="form-control mb-2" value="<?= $this->smtp->get_port() ?>">
 					</div>
+                    <div class="col-sm-6">
+						<label class="form-label">SMTP Encryption</label>
+						<select class="form-control mb-2" name="encryption">
+							<?php
+							if ($this->smtp->get_encryption() === 'ssl') {
+							?>
+								<option value="ssl" selected="true">SSL</option>
+								<option value="tls">TLS</option>
+ 							    <option value="none">None</option>
+							<?php
+                            }
+							elseif ($this->smtp->get_encryption() === 'tls') {
+							?>
+								<option value="ssl">SSL</option>
+								<option value="tls" selected="true">TLS</option>
+ 							    <option value="none">None</option>
+  						    <?php
+                            }
+							elseif ($this->smtp->get_encryption() === 'none') {
+							?>
+								<option value="ssl">SSL</option>
+								<option value="tls">TLS</option>
+ 							    <option value="none" selected="true">None</option>
+							<?php
+							}
+							?>
+						</select>
+					</div>
 					<div class="col-sm-6">
 						<label class="form-label">SMTP Status</label>
 						<select class="form-control mb-2" name="status">
@@ -218,16 +251,28 @@
 								<option value="google" selected="true">Google reCAPTCHA</option>
 								<option value="human">hCaptcha</option>
 								<option value="crypto">CryptoLoot</option>
+								<option value="turnstile">Cloudflare Turnstile</option>
 							<?php
 							elseif ($this->grc->get_type() === 'human') :
 							?>
 								<option value="google">Google reCAPTCHA</option>
 								<option value="human" selected="true">hCaptcha</option>
 								<option value="crypto">CryptoLoot</option>
-							<?php else : ?>
+								<option value="turnstile">Cloudflare Turnstile</option>
+							<?php
+							elseif ($this->grc->get_type() === 'crypto') :
+							?>
 								<option value="google">Google reCAPTCHA</option>
 								<option value="human">hCaptcha</option>
 								<option value="crypto" selected="true">CryptoLoot</option>
+								<option value="turnstile">Cloudflare Turnstile</option>
+							<?php
+							elseif ($this->grc->get_type() === 'turnstile') :
+							?>
+								<option value="google">Google reCAPTCHA</option>
+								<option value="human">hCaptcha</option>
+								<option value="crypto">CryptoLoot</option>
+								<option value="turnstile" selected="true">Cloudflare Turnstile</option>
 							<?php
 							endif;
 							?>
@@ -304,6 +349,142 @@
 					</div>
 					<div class="col-sm-12">
 						<input type="submit" name="update_ssl" value="Change" class="btn btn-primary btn-pill">
+					</div>
+				</div>
+				</form>
+			</div>
+			<div class="tab-pane <?php if ($this->input->get('acme')) : ?>
+				active
+			<?php endif ?>" id="acme">
+				<?= form_open('api/settings') ?>
+				<div class="row">
+				<div class="hr-text text-green">Let's Encrypt</div>
+					<div class="col-sm-12">
+						<label class="form-label">Directory URL</label>
+						<input type="text" name="letsencrypt" class="form-control mb-2" value="<?= $this->acme->get_letsencrypt() ?>">
+					</div>
+					<div class="hr-text text-green">ZeroSSL</div>
+					<?php
+						$zerossl = $this->acme->get_zerossl();
+						if ($zerossl == 'not-set') {
+							$zerossl = [
+								'url' => '',
+								'eab_kid' => '',
+								'eab_hmac_key' => ''
+							];
+						}
+					?>
+					<div class="col-sm-6">
+						<label class="form-label">Directory URL</label>
+						<input type="text" name="zerossl_url" class="form-control mb-2" value="<?= $zerossl['url'] ?>">
+					</div>
+					<div class="col-sm-6">
+						<label class="form-label">EAB Key ID</label>
+						<input type="text" name="zerossl_kid" class="form-control mb-2" value="<?= $zerossl['eab_kid'] ?>">
+					</div>
+					<div class="col-sm-12">
+						<label class="form-label">EAB HMAC Key</label>
+						<input type="text" name="zerossl_hmac" class="form-control mb-2" value="<?= $zerossl['eab_hmac_key'] ?>">
+					</div>
+					<div class="hr-text text-green">Google Trust</div>
+					<?php
+						$googletrust = $this->acme->get_googletrust();
+						if ($googletrust == 'not-set') {
+							$googletrust = [
+								'url' => '',
+								'eab_kid' => '',
+								'eab_hmac_key' => ''
+							];
+						}
+					?>
+					<div class="col-sm-6">
+						<label class="form-label">Directory URL</label>
+						<input type="text" name="googletrust_url" class="form-control mb-2" value="<?= $googletrust['url'] ?>">
+					</div>
+					<div class="col-sm-6">
+						<label class="form-label">EAB Key ID</label>
+						<input type="text" name="googletrust_kid" class="form-control mb-2" value="<?= $googletrust['eab_kid'] ?>">
+					</div>
+					<div class="col-sm-12">
+						<label class="form-label">EAB HMAC Key</label>
+						<input type="text" name="googletrust_hmac" class="form-control mb-2" value="<?= $googletrust['eab_hmac_key'] ?>">
+					</div>
+					<div class="hr-text text-green">CloudFlare API</div>
+					<?php
+						$cloudflare = $this->acme->get_cloudflare();
+						if ($cloudflare == 'not-set') {
+							$cloudflare = [
+								'email' => '',
+								'api_key' => '',
+								'domain' => ''
+							];
+						}
+					?>
+					<div class="col-sm-6">
+						<label class="form-label">Account Email</label>
+						<input type="text" name="cloudflare_email" class="form-control mb-2" value="<?= $cloudflare['email'] ?>">
+					</div>
+					<div class="col-sm-6">
+						<label class="form-label">Domain Name Added in CloudFlare</label>
+						<input type="text" name="cloudflare_domain" class="form-control mb-2" value="<?= $cloudflare['domain'] ?>">
+					</div>
+					<div class="col-sm-12">
+						<label class="form-label">Account API Key</label>
+						<input type="text" name="cloudflare_key" class="form-control mb-2" value="<?= $cloudflare['api_key'] ?>">
+					</div>
+					<div class="hr-text text-green">ACME</div>
+					<?php
+						$dnsSettings = $this->acme->get_dns();
+					?>
+					<div class="col-sm-6">
+						<label class="form-label">DNS over HTTPS</label>
+						<select class="form-control mb-2" name="dns_doh">
+							<?php
+							if ($dnsSettings['doh'] === 'active') :
+							?>
+								<option value="active" selected="true">Active</option>
+								<option value="inative">Inactive</option>
+							<?php
+							else :
+							?>
+								<option value="active">Active</option>
+								<option value="inative" selected="true">Inactive</option>
+							<?php
+							endif;
+							?>
+						</select>
+						<p>Use DNS over HTTPS to avoid problems if you are using free hosting.</p>
+					</div>
+					<div class="col-sm-6">
+						<label class="form-label">DNS Resolver</label>
+						<input type="text" name="dns_resolver" class="form-control mb-2" value="<?= $dnsSettings['resolver'] ?>">
+						<p>DNS over HTTPS uses diferent hostname.</p>
+						<p>Google Public DNS:</p>
+						<ul>
+							<li>Normal DNS: 8.8.8.8</li>
+							<li>DNS over HTTPS: dns.google</li>
+						</ul>
+					</div>
+					<div class="col-sm-12">
+						<label class="form-label">Status</label>
+						<select class="form-control mb-2" name="status">
+							<?php
+							if ($this->acme->get_status() === 'active') :
+							?>
+								<option value="1" selected="true">Active</option>
+								<option value="0">Inactive</option>
+							<?php
+							else :
+							?>
+								<option value="1">Active</option>
+								<option value="0" selected="true">Inactive</option>
+							<?php
+							endif;
+							?>
+						</select>
+					</div>
+					<div class="col-sm-12">
+						<input type="submit" name="update_acme" value="Change" class="btn btn-primary btn-pill">
 					</div>
 				</div>
 				</form>

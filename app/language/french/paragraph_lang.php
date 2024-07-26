@@ -9,8 +9,8 @@ $lang['cpanel_login'] = 'Nous allons maintenant vous rediriger vers cPanel.';
 $lang['account_created'] = 'Tout a correctement été configuré.';
 $lang['search_note'] = 'Le résultat de la recherche sera affiché ici une fois un nom de domaine recherché.';
 $lang['search_error'] = "Désolé! Ce nom de domaine n'est associé à aucun de vos comptes d'hébergement Web.";
-$lang['oops_note'] = "Oups… vous venez de trouver une page d'erreur";
-$lang['user_inactive_note'] = 'Nous sommes désolés mais votre compte est inactif, veuillez vérifier votre boîte de réception.';
+$lang['oops_note'] = 'Votre compte est en attente';
+$lang['user_inactive_note'] = 'Vous devez activer votre compte avant de commencer à utiliser nos services, veuillez vérifier votre boîte de réception.';
 $lang['err_404_note'] = "Nous sommes désolés mais la page que vous recherchez n'a pas été trouvée.";
 $lang['err_500_note'] = "Nous sommes désolés mais le service n'est pas disponible pour le moment.";
 $lang['err_503_note'] = "Nous sommes désolés mais la page que vous recherchez est interdite d'accès.";
@@ -23,3 +23,9 @@ $lang['account_note'] = "Certaines des fonctionnalités d'hébergement peuvent n
 $lang['no_reply_found'] = 'Aucune réponse trouvée.';
 $lang['ticket_closed'] = 'Le ticket a été fermé. Cliquez pour';
 $lang['to_reopen'] = 'ré-ouvrir.';
+$lang['delete_msg'] = 'La suppression du certificat ici le retirera de la liste dans l\'espace client.
+<ul>
+    <li>Cela NE supprimera PAS le certificat SSL actuellement installé sur votre domaine.</li>
+    <li>Cela NE fera PAS revenir votre site web en HTTP.</li>
+    <li>Le certificat RESTERA valide jusqu\'à la date d\'expiration.</li>
+</ul>';
